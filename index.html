@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>球球快跑</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:#0d0f1a;color:#e7ecff;font-family:"Courier New",Courier,monospace;line-height:1.75}
+  .container{max-width:1040px;margin:0 auto;padding:0 20px}
+  /* ===== 导航区 ===== */
+  .site-nav{position:sticky;top:0;z-index:50;background:rgba(13,15,26,.92);backdrop-filter:blur(8px);border-bottom:1px solid #2b3552}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 20px;max-width:1040px;margin:0 auto;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:bold;font-size:19px;color:#ffd84d;text-decoration:none;letter-spacing:2px}
+  .brand .ball{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe680,#e8a23d 60%,#b5912a);box-shadow:0 0 10px #ffd84d66}
+  .nav-links{display:flex;gap:4px;flex-wrap:wrap}
+  .nav-links a{color:#c7d0ec;text-decoration:none;font-size:14px;padding:7px 13px;border-radius:8px;transition:color .15s,background .15s}
+  .nav-links a:hover{color:#ffd84d;background:#232c47}
+  /* ===== 首屏 ===== */
+  .hero{padding:88px 0 72px;text-align:center;background:radial-gradient(640px 320px at 72% 18%,rgba(90,214,232,.14),transparent),radial-gradient(520px 280px at 18% 82%,rgba(255,216,77,.10),transparent)}
+  .hero .tagline{color:#b9c4e6;font-size:16px;margin:18px auto 0;max-width:660px}
+  .hero .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+  .hero a.go{display:inline-block;text-decoration:none;font-size:20px;font-weight:bold;letter-spacing:3px;color:#1b1206;background:#ffd84d;border-bottom:5px solid #b5912a;border-radius:8px;padding:12px 34px}
+  .hero a.go:active{transform:translateY(3px);border-bottom-width:2px}
+  .hero a.ghost{display:inline-block;text-decoration:none;font-size:15px;color:#cdd6f4;background:#232c47;border:2px solid #3a466b;border-radius:8px;padding:11px 24px}
+  .hero a.ghost:hover{background:#2c2748}
+  .hero .meta{margin-top:26px;color:#9fb0e0;font-size:13px;letter-spacing:1px}
+  /* ===== 主内容区 ===== */
+  main{display:block}
+  .section{padding:66px 0}
+  .section.alt{background:rgba(35,44,71,.22)}
+  .sec-title{font-size:28px;color:#ffd84d;letter-spacing:2px;margin-bottom:10px}
+  .sec-desc{color:#9fb0e0;font-size:15px;margin-bottom:26px;max-width:780px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .info-card{background:#161d33;border:2px solid #3a466b;border-radius:12px;padding:20px 22px}
+  .info-card h3{font-size:17px;color:#ffd84d;margin-bottom:8px}
+  .info-card p{font-size:13.5px;color:#c7d0ec;line-height:1.8}
+  .info-card .em{color:#8fe3a0}
+  .pill{display:inline-block;background:#232c47;border:1px solid #3a466b;color:#8fe3a0;border-radius:20px;padding:2px 12px;font-size:12px;margin:0 6px 8px 0}
+  table.ctrl{width:100%;border-collapse:collapse;margin-top:6px;background:#161d33;border:2px solid #3a466b;border-radius:12px;overflow:hidden}
+  table.ctrl th,table.ctrl td{padding:12px 16px;text-align:left;border-bottom:1px solid #2b3552;font-size:14px}
+  table.ctrl tr:last-child td{border-bottom:none}
+  table.ctrl th{color:#8fe3a0;font-size:13px;letter-spacing:1px}
+  table.ctrl td:first-child{white-space:nowrap}
+  kbd{background:#232c47;border:1px solid #3a466b;border-bottom-width:3px;border-radius:6px;padding:2px 9px;color:#ffd84d;font-family:inherit;font-size:13px}
+  /* ===== 游戏区 ===== */
+  .game-section{padding:56px 0 72px}
+  #wrap{position:relative;width:100%;max-width:960px;margin:0 auto;image-rendering:pixelated;touch-action:none}
+  /* ===== 页脚 ===== */
+  .site-footer{border-top:1px solid #2b3552;padding:30px 0 36px;text-align:center;color:#9fb0e0;font-size:13px;line-height:2}
+  .site-footer .fbrand{color:#ffd84d;font-weight:bold;letter-spacing:2px;font-size:15px}
+  @media (max-width:680px){
+    .hero{padding:64px 0 52px}
+    .section{padding:48px 0}
+    .sec-title{font-size:23px}
+    .nav-inner{justify-content:center}
+    table.ctrl th,table.ctrl td{padding:10px 12px;font-size:13px}
+  }
+  canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background:#87b9e8;border:4px solid #1b2236;border-radius:6px;box-shadow:0 0 0 4px #2b3552,0 12px 40px rgba(0,0,0,.6)}
+  .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(10,14,28,.82);backdrop-filter:blur(2px);padding:18px;gap:14px}
+  .overlay.show{display:flex}
+  h1{font-size:46px;letter-spacing:6px;color:#ffd84d;text-shadow:3px 3px 0 #b5532a,6px 6px 0 #00000055}
+  h2{font-size:26px;color:#ffd84d;text-shadow:2px 2px 0 #00000066}
+  .sub{color:#b9c4e6;font-size:14px;line-height:1.7}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .card,.diff{cursor:pointer;border:3px solid #3a466b;background:#161d33;border-radius:8px;padding:12px 14px;width:200px;transition:transform .08s,border-color .1s,background .1s;text-align:left}
+  .card:hover,.diff:hover{transform:translateY(-3px)}
+  .card.sel,.diff.sel{border-color:#ffd84d;background:#25304f;box-shadow:0 0 0 2px #ffd84d55 inset}
+  .card .nm{font-size:18px;font-weight:bold;color:#ffd84d}
+  .card .ds{font-size:12px;color:#c7d0ec;margin-top:6px;line-height:1.5}
+  .card .hp{font-size:12px;color:#ff8a8a;margin-top:6px}
+  .diff{width:130px;text-align:center}
+  .diff .nm{font-size:16px;color:#8fe3a0;font-weight:bold}
+  .diff .ds{font-size:11px;color:#c7d0ec;margin-top:4px}
+  .label{font-size:13px;color:#9fb0e0;letter-spacing:2px}
+  .best{font-size:14px;color:#ffd84d;min-height:18px}
+  button.go{cursor:pointer;font-family:inherit;font-size:20px;font-weight:bold;letter-spacing:3px;color:#1b1206;background:#ffd84d;border:none;border-bottom:5px solid #b5912a;border-radius:8px;padding:12px 34px;margin-top:6px}
+  button.go:active{transform:translateY(3px);border-bottom-width:2px}
+  button.ghost{cursor:pointer;font-family:inherit;font-size:15px;color:#cdd6f4;background:#232c47;border:2px solid #3a466b;border-radius:8px;padding:9px 22px}
+  button.ghost:hover{background:#2c2748}
+  .stats{font-size:16px;line-height:2;color:#e7ecff}
+  .tier{font-size:34px;font-weight:bold}
+  .tier.gao{color:#ff5fa2;text-shadow:2px 2px 0 #00000066}
+  .tier.you{color:#6fe06f;text-shadow:2px 2px 0 #00000066}
+  .tier.le{color:#9aa6c8;text-shadow:2px 2px 0 #00000066}
+  .hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:12px;color:#243049;opacity:.7;pointer-events:none}
+  #touch{display:none;position:absolute;left:0;right:0;bottom:0;padding:16px 20px 26px;justify-content:space-between;align-items:flex-end;pointer-events:none;z-index:5}
+  body.touch-on.playing #touch{display:flex}
+  #touch .tleft{display:flex;gap:16px;pointer-events:none}
+  #touch .tright{display:flex;gap:16px;align-items:flex-end;pointer-events:none}
+  .tbtn{pointer-events:auto;width:70px;height:70px;border-radius:50%;border:3px solid #ffffff55;background:rgba(18,26,46,.5);color:#fff;font-size:28px;font-weight:bold;font-family:inherit;-webkit-user-select:none;user-select:none;touch-action:none}
+  .tbtn.jump{width:96px;height:96px;font-size:24px;background:rgba(255,216,77,.6);color:#1b1206;border-color:#ffd84d}
+  .tbtn.atk{width:70px;height:70px;font-size:22px;background:rgba(90,214,232,.55);color:#0a1a1a;border-color:#5ad6e8}
+  .tbtn:active{transform:scale(.9);filter:brightness(1.2)}
+  @media (max-width:680px){h1{font-size:34px}.card{width:150px}.diff{width:104px}}
+</style>
+</head>
+<body>
+<!-- ===================== 导航区 ===================== -->
+<header class="site-nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top"><span class="ball"></span>球球快跑</a>
+    <nav class="nav-links">
+      <a href="#features">玩法特色</a>
+      <a href="#characters">角色介绍</a>
+      <a href="#controls">操作指南</a>
+      <a href="#world">关卡与地形</a>
+      <a href="#play">开始游戏</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<!-- ===================== 首屏 ===================== -->
+<section class="hero">
+  <div class="container">
+    <h1>球球快跑</h1>
+    <p class="tagline">单文件、零依赖的 2D 平台跳跃游戏 —— 地上狂奔穿关，地下水域潜泳避险。选择你的角色，用专属技能一路吃到终点旗帜。</p>
+    <div class="cta-row">
+      <a class="go" href="#play">开始游戏</a>
+      <a class="ghost" href="#features">了解玩法</a>
+    </div>
+    <p class="meta">HTML5 Canvas · 单文件可直接运行 · 支持键盘与触屏 · 本地最高分记录</p>
+  </div>
+</section>
+
+<!-- ===================== 玩法特色 ===================== -->
+<section id="features" class="section alt">
+  <div class="container">
+    <h2 class="sec-title">玩法特色</h2>
+    <p class="sec-desc">平台跳跃 × 游泳潜行 × 角色技能，六大核心体验。</p>
+    <div class="grid">
+      <div class="info-card"><h3>双层世界</h3><p>地上层是主战场：地表、平台、通道与旗帜；地下是以<span class="em">水域为核心的洞穴系统</span>，掉入地表缺口即进入地下水域。</p></div>
+      <div class="info-card"><h3>游泳与氧气</h3><p>深水中自由潜泳，<span class="em">上 / 下 控制浮沉</span>；氧气耗尽会呛水扣血，记得浮出水面或到空气中换气。</p></div>
+      <div class="info-card"><h3>角色专属攻击</h3><p>小罗<span class="em">投掷篮球</span>、运球来<span class="em">变身滚球撞击</span>、香肠<span class="em">投掷小香肠</span>，各有冷却与手感差异。</p></div>
+      <div class="info-card"><h3>障碍与怪物</h3><p>周期喷发的火焰、往返巡逻的锯齿；地表巡逻怪、飞行怪与水中水母，可<span class="em">踩踏或技能击杀</span>（+50 分）。</p></div>
+      <div class="info-card"><h3>顶级手感</h3><p>跳跃缓冲、土狼时间、可变跳跃高度、二段跳、<span class="em">打击停顿</span>与镜头前瞻，操作反馈顺滑清晰。</p></div>
+      <div class="info-card"><h3>精致画面</h3><p>多层视差背景、动态光影、<span class="em">水下焦散与体积光</span>、粒子特效与角色帧动画。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 角色介绍 ===================== -->
+<section id="characters" class="section">
+  <div class="container">
+    <h2 class="sec-title">角色介绍</h2>
+    <p class="sec-desc">三位可选角色，血量、速度与技能各不相同，适应不同玩法风格。</p>
+    <div class="grid">
+      <div class="info-card">
+        <h3>小罗</h3>
+        <p><span class="pill">血量 2</span><span class="pill">速度快</span><span class="pill">跳跃更强</span></p>
+        <p>瘦高敏捷型角色，身手灵活、跳跃能力出众，适合速通与精准平台跳跃。</p>
+        <p><span class="em">技能：投掷篮球</span> —— 篮球呈抛物线飞行并可在地面弹跳，命中怪物即将其消灭。</p>
+      </div>
+      <div class="info-card">
+        <h3>运球来</h3>
+        <p><span class="pill">血量 4</span><span class="pill">速度慢</span></p>
+        <p>贪吃胖子型角色，血量最厚、容错最高，适合新手与稳健推进。</p>
+        <p><span class="em">技能：滚球撞击</span> —— 变身为滚球高速冲撞，撞飞沿途怪物，持续一段时间后进入冷却。</p>
+      </div>
+      <div class="info-card">
+        <h3>香肠</h3>
+        <p><span class="pill">血量 3</span><span class="pill">速度中等</span></p>
+        <p>长手脚的香肠，属性均衡，各项能力居中，适合大多数关卡场景。</p>
+        <p><span class="em">技能：投掷小香肠</span> —— 小香肠飞行快而平直，射速更快，适合连续输出。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 操作指南 ===================== -->
+<section id="controls" class="section alt">
+  <div class="container">
+    <h2 class="sec-title">操作指南</h2>
+    <p class="sec-desc">桌面端使用键盘，移动端自动显示虚拟按键，两套操作逻辑一致。</p>
+    <table class="ctrl">
+      <tr><th>动作</th><th>按键 / 操作</th></tr>
+      <tr><td>向左 / 向右移动</td><td><kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd></td></tr>
+      <tr><td>跳跃 / 二段跳</td><td><kbd>↑</kbd> / <kbd>W</kbd> / <kbd>空格</kbd>；空中再按一次触发二段跳，按住跳得更高</td></tr>
+      <tr><td>攻击（角色技能）</td><td><kbd>J</kbd> / <kbd>X</kbd> / <kbd>F</kbd>，技能有冷却（HUD 左上冷却条）</td></tr>
+      <tr><td>水中上浮 / 下潜</td><td><kbd>↑</kbd> / <kbd>↓</kbd>，配合左右方向游泳</td></tr>
+      <tr><td>跃出水面</td><td>游到水面附近按跳跃键即可跃出上岸</td></tr>
+      <tr><td>移动端</td><td>触屏虚拟按键：左下 ◀ ▶ 移动，右下 ▼ 下潜、「攻」技能、「跳」跳跃</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== 关卡与地形 ===================== -->
+<section id="world" class="section">
+  <div class="container">
+    <h2 class="sec-title">关卡与地形</h2>
+    <p class="sec-desc">三大关卡，世界宽度 5200–6000，检查点存档，抵达旗帜过关。</p>
+    <div class="grid">
+      <div class="info-card"><h3>地上层</h3><p>地表与悬空平台、移动平台渡坑；<span class="em">浅水坑</span>会减速，火焰与锯齿构成主要威胁。</p></div>
+      <div class="info-card"><h3>地下水域</h3><p>地表缺口即为<span class="em">深水坑</span>；部分水域有岩石穹顶，必须下潜<span class="em">穿越水下通道</span>并躲避水中障碍。</p></div>
+      <div class="info-card"><h3>障碍机制</h3><p>火焰<span class="em">周期性喷发</span>，熄灭窗口可安全通过；锯齿沿轨道往返巡逻，注意时机穿插。</p></div>
+      <div class="info-card"><h3>怪物图鉴</h3><p>紫色<span class="em">巡逻怪</span>地面往返、青色<span class="em">飞行怪</span>空中盘旋、粉色<span class="em">水母</span>水中漂移；踩踏或技能均可击杀。</p></div>
+      <div class="info-card"><h3>食物分值</h3><p>苹果 <span class="em">10</span> · 肉堡 <span class="em">20</span> · 星星 <span class="em">50</span> · 宝石 <span class="em">100</span>；击杀怪物另得 50 分。</p></div>
+      <div class="info-card"><h3>难度选择</h3><p><span class="em">简单 / 普通 / 困难</span>三档，影响平台与障碍速度、怪物速度与数量；通关按得分占比给出评价。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 开始游戏（内嵌游戏本体） ===================== -->
+<section id="play" class="game-section alt">
+  <div class="container">
+    <h2 class="sec-title">开始游戏</h2>
+    <p class="sec-desc">选择角色与难度，点击「开始游戏」。死亡后可从最近检查点继续；通关全部三关即可结算评价。</p>
+    <div id="wrap">
+  <canvas id="game" width="640" height="360"></canvas>
+  <div id="menu" class="overlay show">
+    <h1>球球快跑</h1>
+    <div class="sub">方向键 / WASD 移动 · 上 / W / 空格 跳跃（空中再按一次二段跳）· J / X / F 攻击<br>掉入地表缺口会进入<strong>地下水域</strong>：按 上/下 游泳、躲避水下锯齿与水母、注意氧气，游到对岸跃出水面继续前进</div>
+    <div class="best" id="bestLine"></div>
+    <div class="label">选择角色</div>
+    <div class="row" id="chars"></div>
+    <div class="label">选择难度</div>
+    <div class="row" id="diffs"></div>
+    <button class="go" id="startBtn">开始游戏</button>
+  </div>
+  <div id="gameover" class="overlay">
+    <h2 style="color:#ff6b6b">你被淘汰了！</h2>
+    <div class="stats" id="goStats"></div>
+    <div class="row"><button class="go" id="retryBtn">重新开始</button><button class="ghost" id="menuBtn">返回菜单</button></div>
+  </div>
+  <div id="win" class="overlay">
+    <h2>通关成功！</h2>
+    <div class="stats" id="winStats"></div>
+    <div class="tier" id="winTier"></div>
+    <div class="row"><button class="go" id="winRetry">再玩一次</button><button class="ghost" id="winMenu">返回菜单</button></div>
+  </div>
+  <div id="touch">
+    <div class="tleft">
+      <button class="tbtn" data-key="left" aria-label="左">◀</button>
+      <button class="tbtn" data-key="right" aria-label="右">▶</button>
+    </div>
+    <div class="tright">
+      <button class="tbtn" data-key="down" aria-label="下">▼</button>
+      <button class="tbtn atk" data-key="attack" aria-label="攻">攻</button>
+      <button class="tbtn jump" data-key="up" aria-label="跳">跳</button>
+    </div>
+  </div>
+  <div class="hint">提示：上/下 键在水中游泳 · 氧气耗尽会呛水 · 检查点保存进度</div>
+</div>
+  </div>
+</section>
+</main>
+
+<!-- ===================== 页脚 ===================== -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="fbrand">球球快跑</div>
+    <div>单文件 HTML5 游戏 · 无外部依赖 · 键盘 / 触屏均可游玩</div>
+    <div>玩法：平台跳跃 × 游泳潜行 × 角色技能 · 祝你通关三关！</div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.imageSmoothingEnabled = false;
+  const GRAVITY = 0.6, FALL_GRAVITY = 0.42, MAX_FALL = 10;
+  // ===== 基础移动速度缩放（全局可调）=====
+  // 1.00 = 原始速度；0.65 ≈ 降速 35%（当前值）。建议微调区间 0.5–0.7。
+  // 仅作用于行走 / 奔跑 / 游泳；跳跃、滚球冲撞、投掷等动作速度不受影响。
+  const MOVE_SPEED_SCALE = 0.65;
+  // ===== 障碍物移动速度缩放（全局可调）=====
+  // 1.00 = 原始速度；0.5 = 减半（当前值）。统一作用于【移动锯齿】与【移动平台】，
+  // 只改变快慢，运动方向与往返行为保持不变。建议微调区间 0.4–0.7。
+  const OBSTACLE_SPEED_SCALE = 0.5;
+  const SURF = 300, SLAB = 60, FLOOR = 700, WORLDH = 760, WSURF = 302;
+
+  const CHARACTERS = {
+    xiaoluo: { name: '小罗', hp: 2, speed: 3.4, jump: -12.5, djump: -11.5, w: 14, h: 34, body: 'thin', color: '#1d1d1d', accent: '#ffffff', skin: '#3a2a1a', attack: 'basketball', atkName: '投掷篮球' },
+    yunqiulai: { name: '运球来', hp: 4, speed: 2.2, jump: -11, djump: -10, w: 22, h: 26, body: 'fat', color: '#e8a23d', accent: '#fff3d6', skin: '#f0c89a', attack: 'roll', atkName: '滚球撞击' },
+    xiangchang: { name: '香肠', hp: 3, speed: 2.9, jump: -11.5, djump: -10.5, w: 18, h: 28, body: 'sausage', color: '#d65a5a', accent: '#ffd0d0', skin: '#ffb0b0', attack: 'sausage', atkName: '投掷小香肠' }
+  };
+  const DIFFS = {
+    easy: { name: '简单', ds: '平台慢·少障碍', speedMul: 0.6, hazards: 'all', enemyMul: 0.6 },
+    normal: { name: '普通', ds: '标准挑战', speedMul: 1.0, hazards: 'all', enemyMul: 1.0 },
+    hard: { name: '困难', ds: '平台快·障碍多', speedMul: 1.6, hazards: 'all+extra', enemyMul: 1.5 }
+  };
+  const FOOD_TYPES = {
+    apple: { points: 10, color: '#e8483b' }, burger: { points: 20, color: '#e09a3a' },
+    star: { points: 50, color: '#ffd84d' }, gem: { points: 100, color: '#5ad6e8' }
+  };
+
+  const LEVELS = [
+    {
+      worldW: 5200,
+      ground: [[0, 1000], [1480, 900], [2660, 820], [3900, 1300]],
+      plats: [[200, 235, 120], [420, 190, 100], [700, 220, 120], [1560, 225, 120], [1800, 175, 100], [2050, 220, 120], [2280, 170, 100], [2740, 225, 120], [2980, 175, 100], [3220, 220, 120], [3980, 225, 120], [4220, 175, 100], [4460, 220, 120], [4700, 170, 100], [4930, 220, 120]],
+      rock: [[3520, 300, 340, 170]],
+      moving: [{ baseX: 2520, baseY: 262, w: 120, h: 12, axis: 'x', amp: 120, speed: 0.02, phase: 0 }, { baseX: 1150, baseY: 250, w: 110, h: 12, axis: 'y', amp: 60, speed: 0.022, phase: 1 }],
+      pools: [[500, 160], [3000, 160], [4500, 160]],
+      hazards: [
+        { type: 'fire', x: 350, w: 60, diff: 'all' }, { type: 'fire', x: 1600, w: 70, diff: 'all' }, { type: 'fire', x: 2900, w: 70, diff: 'all' }, { type: 'fire', x: 4300, w: 70, diff: 'all' },
+        { type: 'saw', baseX: 650, baseY: 276, r: 14, axis: 'x', amp: 60, speed: 0.028, phase: 0, diff: 'all' }, { type: 'saw', baseX: 1950, baseY: 276, r: 14, axis: 'x', amp: 60, speed: 0.028, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 3150, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.026, phase: 0.5, diff: 'all' }, { type: 'saw', baseX: 4550, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.028, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 1180, baseY: 430, r: 14, axis: 'x', amp: 70, speed: 0.026, phase: 0, diff: 'all' }, { type: 'saw', baseX: 1300, baseY: 560, r: 14, axis: 'x', amp: 60, speed: 0.024, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 3700, baseY: 520, r: 14, axis: 'x', amp: 60, speed: 0.026, phase: 0.5, diff: 'all' }
+      ],
+      enemies: [
+        { type: 'walker', x: 600, amp: 80, speed: 0.02, hp: 1 }, { type: 'walker', x: 1700, amp: 90, speed: 0.022, hp: 1 }, { type: 'walker', x: 2850, amp: 90, speed: 0.024, hp: 1 },
+        { type: 'walker', x: 4100, amp: 90, speed: 0.024, hp: 2 }, { type: 'walker', x: 4900, amp: 90, speed: 0.026, hp: 2 },
+        { type: 'flyer', x: 1200, y: 180, ampX: 100, ampY: 35, speed: 0.025, hp: 1 }, { type: 'flyer', x: 3100, y: 175, ampX: 100, ampY: 35, speed: 0.028, hp: 1 }, { type: 'flyer', x: 4600, y: 180, ampX: 100, ampY: 30, speed: 0.03, hp: 1 },
+        { type: 'jelly', x: 1240, y: 480, ampX: 80, ampY: 40, speed: 0.02, hp: 1 }, { type: 'jelly', x: 3650, y: 520, ampX: 80, ampY: 40, speed: 0.022, hp: 1 }
+      ],
+      foods: [
+        [120, 262, 'apple'], [360, 262, 'star'], [640, 262, 'apple'], [900, 262, 'burger'], [1560, 262, 'apple'], [1900, 262, 'star'], [2300, 262, 'gem'], [2740, 262, 'apple'], [3100, 262, 'star'], [3400, 262, 'burger'], [4000, 262, 'apple'], [4400, 262, 'star'], [4800, 262, 'gem'], [5000, 262, 'apple'],
+        [200, 221, 'star'], [420, 176, 'apple'], [700, 206, 'star'], [1800, 161, 'gem'], [2280, 156, 'star'], [2980, 161, 'apple'], [4220, 161, 'gem'], [4700, 156, 'star'],
+        [1100, 420, 'gem'], [1250, 560, 'star'], [1400, 460, 'apple'], [3580, 520, 'gem'], [3720, 600, 'star'], [3820, 480, 'apple']
+      ],
+      cps: [40, 1490, 2670, 3910, 4800], flagX: 5100
+    },
+    {
+      worldW: 5600,
+      ground: [[0, 820], [1280, 760], [2500, 700], [3660, 760], [4880, 720]],
+      plats: [[220, 230, 120], [450, 185, 100], [1350, 225, 120], [1600, 175, 100], [1850, 220, 120], [2150, 170, 100], [2580, 225, 120], [2820, 175, 100], [3050, 220, 120], [3740, 225, 120], [3980, 175, 100], [4220, 220, 120], [4960, 225, 120], [5200, 175, 100]],
+      rock: [[1320, 300, 380, 160], [4920, 300, 360, 190]],
+      moving: [{ baseX: 2160, baseY: 262, w: 120, h: 12, axis: 'x', amp: 120, speed: 0.022, phase: 0 }, { baseX: 3300, baseY: 258, w: 120, h: 12, axis: 'x', amp: 130, speed: 0.024, phase: 1 }, { baseX: 1000, baseY: 250, w: 110, h: 12, axis: 'y', amp: 60, speed: 0.024, phase: 0.5 }],
+      pools: [[300, 160], [2700, 160], [4300, 160], [5300, 160]],
+      hazards: [
+        { type: 'fire', x: 300, w: 60, diff: 'all' }, { type: 'fire', x: 1500, w: 70, diff: 'all' }, { type: 'fire', x: 2800, w: 70, diff: 'all' }, { type: 'fire', x: 4100, w: 70, diff: 'all' }, { type: 'fire', x: 5200, w: 70, diff: 'all' }, { type: 'fire', x: 2000, w: 60, diff: 'extra' },
+        { type: 'saw', baseX: 500, baseY: 276, r: 14, axis: 'x', amp: 60, speed: 0.03, phase: 0, diff: 'all' }, { type: 'saw', baseX: 1700, baseY: 276, r: 14, axis: 'x', amp: 60, speed: 0.03, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 2900, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.028, phase: 0.5, diff: 'all' }, { type: 'saw', baseX: 4100, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.03, phase: 2, diff: 'all' },
+        { type: 'saw', baseX: 1450, baseY: 430, r: 14, axis: 'x', amp: 70, speed: 0.028, phase: 0, diff: 'all' }, { type: 'saw', baseX: 1550, baseY: 580, r: 14, axis: 'x', amp: 60, speed: 0.026, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 5050, baseY: 540, r: 14, axis: 'x', amp: 60, speed: 0.028, phase: 0.5, diff: 'all' }
+      ],
+      enemies: [
+        { type: 'walker', x: 500, amp: 80, speed: 0.024, hp: 1 }, { type: 'walker', x: 1500, amp: 90, speed: 0.026, hp: 1 }, { type: 'walker', x: 2700, amp: 90, speed: 0.026, hp: 2 }, { type: 'walker', x: 3900, amp: 90, speed: 0.028, hp: 2 }, { type: 'walker', x: 5100, amp: 90, speed: 0.03, hp: 2 },
+        { type: 'flyer', x: 1100, y: 175, ampX: 100, ampY: 35, speed: 0.028, hp: 1 }, { type: 'flyer', x: 2900, y: 170, ampX: 110, ampY: 35, speed: 0.03, hp: 1 }, { type: 'flyer', x: 4400, y: 175, ampX: 110, ampY: 35, speed: 0.032, hp: 1 },
+        { type: 'jelly', x: 1450, y: 480, ampX: 90, ampY: 45, speed: 0.022, hp: 1 }, { type: 'jelly', x: 1650, y: 540, ampX: 80, ampY: 40, speed: 0.024, hp: 1 }, { type: 'jelly', x: 5050, y: 520, ampX: 90, ampY: 45, speed: 0.024, hp: 1 }
+      ],
+      foods: [
+        [120, 262, 'apple'], [400, 262, 'star'], [700, 262, 'apple'], [1400, 262, 'burger'], [1800, 262, 'apple'], [2200, 262, 'star'], [2600, 262, 'gem'], [3000, 262, 'apple'], [3300, 262, 'star'], [3800, 262, 'burger'], [4200, 262, 'apple'], [4600, 262, 'star'], [5000, 262, 'gem'], [5300, 262, 'apple'],
+        [220, 216, 'star'], [450, 171, 'apple'], [1600, 161, 'gem'], [2150, 156, 'star'], [2820, 161, 'apple'], [3980, 161, 'gem'], [5200, 156, 'star'],
+        [1380, 430, 'gem'], [1520, 560, 'star'], [1700, 470, 'apple'], [4980, 540, 'gem'], [5120, 610, 'star'], [5220, 500, 'apple']
+      ],
+      cps: [40, 1290, 2510, 3670, 4890], flagX: 5500
+    },
+    {
+      worldW: 6000,
+      ground: [[0, 760], [1220, 700], [2380, 660], [3500, 700], [4660, 660], [5480, 520]],
+      plats: [[220, 230, 110], [450, 185, 100], [1300, 225, 110], [1550, 175, 100], [1800, 220, 110], [2460, 225, 110], [2700, 175, 100], [2930, 220, 110], [3580, 225, 110], [3820, 175, 100], [4050, 220, 110], [4740, 225, 110], [4980, 175, 100], [5210, 220, 110], [5560, 225, 110]],
+      rock: [[1260, 300, 360, 200], [3540, 300, 400, 170], [4720, 300, 360, 210]],
+      moving: [{ baseX: 2060, baseY: 258, w: 120, h: 12, axis: 'x', amp: 130, speed: 0.024, phase: 0 }, { baseX: 3180, baseY: 258, w: 120, h: 12, axis: 'x', amp: 130, speed: 0.026, phase: 1 }, { baseX: 4300, baseY: 258, w: 120, h: 12, axis: 'x', amp: 130, speed: 0.026, phase: 0.5 }, { baseX: 900, baseY: 250, w: 110, h: 12, axis: 'y', amp: 60, speed: 0.026, phase: 0 }],
+      pools: [[300, 150], [2600, 150], [4100, 150], [5600, 150]],
+      hazards: [
+        { type: 'fire', x: 300, w: 60, diff: 'all' }, { type: 'fire', x: 1500, w: 70, diff: 'all' }, { type: 'fire', x: 2700, w: 70, diff: 'all' }, { type: 'fire', x: 3900, w: 70, diff: 'all' }, { type: 'fire', x: 5000, w: 70, diff: 'all' }, { type: 'fire', x: 5600, w: 70, diff: 'all' },
+        { type: 'saw', baseX: 450, baseY: 276, r: 14, axis: 'x', amp: 60, speed: 0.032, phase: 0, diff: 'all' }, { type: 'saw', baseX: 1600, baseY: 276, r: 14, axis: 'x', amp: 60, speed: 0.032, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 2800, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.03, phase: 0.5, diff: 'all' }, { type: 'saw', baseX: 4000, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.032, phase: 2, diff: 'all' },
+        { type: 'saw', baseX: 5100, baseY: 276, r: 14, axis: 'x', amp: 55, speed: 0.03, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 1400, baseY: 450, r: 14, axis: 'x', amp: 70, speed: 0.03, phase: 0, diff: 'all' }, { type: 'saw', baseX: 1500, baseY: 580, r: 14, axis: 'x', amp: 60, speed: 0.028, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 3700, baseY: 500, r: 14, axis: 'x', amp: 65, speed: 0.03, phase: 0.5, diff: 'all' }, { type: 'saw', baseX: 3850, baseY: 620, r: 14, axis: 'x', amp: 55, speed: 0.028, phase: 1, diff: 'all' },
+        { type: 'saw', baseX: 4850, baseY: 540, r: 14, axis: 'x', amp: 65, speed: 0.03, phase: 0, diff: 'all' }
+      ],
+      enemies: [
+        { type: 'walker', x: 500, amp: 80, speed: 0.026, hp: 1 }, { type: 'walker', x: 1400, amp: 90, speed: 0.028, hp: 2 }, { type: 'walker', x: 2600, amp: 90, speed: 0.028, hp: 1 }, { type: 'walker', x: 3700, amp: 90, speed: 0.03, hp: 2 }, { type: 'walker', x: 4900, amp: 90, speed: 0.032, hp: 2 }, { type: 'walker', x: 5700, amp: 80, speed: 0.034, hp: 2 },
+        { type: 'flyer', x: 1000, y: 170, ampX: 100, ampY: 35, speed: 0.03, hp: 1 }, { type: 'flyer', x: 2800, y: 165, ampX: 110, ampY: 35, speed: 0.032, hp: 1 }, { type: 'flyer', x: 4400, y: 170, ampX: 110, ampY: 35, speed: 0.034, hp: 1 }, { type: 'flyer', x: 5300, y: 175, ampX: 100, ampY: 35, speed: 0.034, hp: 1 },
+        { type: 'jelly', x: 1380, y: 470, ampX: 90, ampY: 45, speed: 0.024, hp: 1 }, { type: 'jelly', x: 1560, y: 560, ampX: 80, ampY: 40, speed: 0.026, hp: 1 }, { type: 'jelly', x: 3650, y: 480, ampX: 90, ampY: 45, speed: 0.026, hp: 1 }, { type: 'jelly', x: 3820, y: 600, ampX: 80, ampY: 40, speed: 0.028, hp: 1 }, { type: 'jelly', x: 4850, y: 520, ampX: 90, ampY: 45, speed: 0.028, hp: 1 }
+      ],
+      foods: [
+        [120, 262, 'apple'], [400, 262, 'star'], [700, 262, 'apple'], [1300, 262, 'burger'], [1700, 262, 'apple'], [2100, 262, 'star'], [2500, 262, 'gem'], [2900, 262, 'apple'], [3200, 262, 'star'], [3600, 262, 'burger'], [4000, 262, 'apple'], [4400, 262, 'star'], [4800, 262, 'gem'], [5200, 262, 'apple'], [5600, 262, 'star'],
+        [220, 216, 'star'], [450, 171, 'apple'], [1550, 161, 'gem'], [2700, 156, 'star'], [3820, 161, 'apple'], [4980, 161, 'gem'],
+        [1320, 450, 'gem'], [1480, 580, 'star'], [1600, 500, 'apple'], [3600, 480, 'gem'], [3760, 620, 'star'], [3900, 520, 'apple'], [4780, 520, 'gem'], [4920, 620, 'star'], [5020, 560, 'apple']
+      ],
+      cps: [40, 1230, 2390, 3510, 4670, 5490], flagX: 5900
+    }
+  ];
+
+  function makeLevel(idx, diffKey) {
+    const diff = DIFFS[diffKey];
+    const cfg = LEVELS[idx];
+    const staticPlats = cfg.ground.map(g => ({ x: g[0], y: SURF, w: g[1], h: SLAB, type: 'ground' }));
+    cfg.plats.forEach(p => staticPlats.push({ x: p[0], y: p[1], w: p[2], h: 14, type: 'plat' }));
+    staticPlats.push({ x: 0, y: FLOOR, w: cfg.worldW, h: 60, type: 'rock' });
+    (cfg.rock || []).forEach(r => staticPlats.push({ x: r[0], y: r[1], w: r[2], h: r[3], type: 'rock' }));
+    const moving = cfg.moving.map(m => ({ ...m, type: 'moving', x: m.baseX, y: m.baseY, prevX: m.baseX, prevY: m.baseY, dx: 0, dy: 0 }));
+    const water = [];
+    const segs = [...cfg.ground].sort((a, b) => a[0] - b[0]);
+    for (let i = 0; i < segs.length - 1; i++) {
+      const end = segs[i][0] + segs[i][1], next = segs[i + 1][0];
+      if (next > end + 4) water.push({ x: end, y: WSURF, w: next - end, h: FLOOR - WSURF, deep: true });
+    }
+    (cfg.pools || []).forEach(p => water.push({ x: p[0], y: SURF - 6, w: p[1], h: 12, deep: false }));
+    const hazards = cfg.hazards
+      .filter(h => diff.hazards === 'all' ? h.diff === 'all' : true)
+      .map(h => {
+        if (h.type === 'fire') { const gy = h.gy || SURF; return { type: 'fire', x: h.x, y: gy - 24, w: h.w, h: 24, period: 360, phase: (h.x * 7) % 360, active: true }; }
+        return { type: 'saw', baseX: h.baseX, baseY: h.baseY, x: h.baseX, y: h.baseY, r: h.r, axis: h.axis, amp: h.amp, speed: h.speed, phase: h.phase, spin: 0 };
+      });
+    const enemies = (cfg.enemies || []).map(e => ({
+      type: e.type, baseX: e.x, baseY: e.y || SURF, x: e.x, y: e.y || SURF,
+      amp: e.amp || 0, ampX: e.ampX || 0, ampY: e.ampY || 0,
+      speed: e.speed * diff.enemyMul, phase: (e.x * 3) % 6.28, hp: e.hp, maxHp: e.hp,
+      w: e.type === 'walker' ? 20 : 24, h: e.type === 'walker' ? 20 : (e.type === 'jelly' ? 18 : 16),
+      dir: 1, dead: false, anim: 0, flash: 0
+    }));
+    const foods = cfg.foods.map(f => ({ x: f[0], y: f[1], type: f[2], r: 9, taken: false }));
+    const checkpoints = cfg.cps.map(x => ({ x, y: SURF }));
+    const flag = { x: cfg.flagX, y: SURF };
+    let totalScore = 0;
+    foods.forEach(f => totalScore += FOOD_TYPES[f.type].points);
+    return { staticPlats, moving, water, hazards, enemies, foods, checkpoints, flag, worldW: cfg.worldW, totalScore };
+  }
+  let state = 'menu', tick = 0, game = null, player = null;
+  let selectedChar = 'xiaoluo', selectedDiff = 'normal';
+  const keys = { left: false, right: false, up: false, down: false };
+  let jumpBuffer = 0, coyote = 0;
+
+  function newPlayer(ch) {
+    return { x: 40, y: SURF - ch.h, w: ch.w, h: ch.h, vx: 0, vy: 0, onGround: false, facing: 1, hp: ch.hp, maxHp: ch.hp, riding: null, inv: 0, didDouble: false, jumpAnim: 0, landAnim: 0, walkPhase: 0, attackCd: 0, rolling: false, rollTime: 0, rollCd: 0 };
+  }
+
+  function startGame() {
+    const ch = CHARACTERS[selectedChar];
+    let tot = 0, totF = 0;
+    for (let i = 0; i < LEVELS.length; i++) { const L = makeLevel(i, selectedDiff); tot += L.totalScore; totF += L.foods.length; }
+    game = { ch, score: 0, foodCount: 0, killCount: 0, time: 0, levelIndex: 0, totalScore: tot, totalFood: totF, difficulty: DIFFS[selectedDiff], camX: 0, camY: 0, particles: [], projectiles: [], shake: 0, freeze: 0, levelToast: 0, breath: 100, swimming: false };
+    player = newPlayer(ch);
+    loadLevel(0);
+    state = 'playing';
+    hideAll();
+    document.body.classList.add('playing');
+  }
+
+  function loadLevel(idx) {
+    const L = makeLevel(idx, selectedDiff);
+    Object.assign(game, { staticPlats: L.staticPlats, moving: L.moving, water: L.water, hazards: L.hazards, enemies: L.enemies, foods: L.foods, checkpoints: L.checkpoints, flag: L.flag, worldW: L.worldW, activeCp: 0, camX: 0, camY: 0, particles: [], projectiles: [], shake: 0, freeze: 0, levelIndex: idx, levelToast: 100, breath: 100, swimming: false });
+    player.x = L.checkpoints[0].x; player.y = L.checkpoints[0].y - game.ch.h;
+    player.vx = 0; player.vy = 0; player.riding = null;
+    player.hp = player.maxHp; player.inv = 60; player.didDouble = false; player.onGround = false;
+    player.rolling = false; player.rollTime = 0;
+  }
+
+  function reachFlag() { if (game.levelIndex < LEVELS.length - 1) loadLevel(game.levelIndex + 1); else winLevel(); }
+
+  function respawn() {
+    const cp = game.checkpoints[game.activeCp];
+    player.x = cp.x; player.y = cp.y - game.ch.h; player.vx = 0; player.vy = 0; player.riding = null;
+    player.inv = 90; player.didDouble = false; player.rolling = false; player.rollTime = 0; game.breath = 100;
+  }
+
+  function loseHp(knockDir) {
+    player.hp--;
+    game.shake = 6;
+    game.freeze = Math.max(game.freeze || 0, 6);
+    spawnParticles(player.x + player.w / 2, player.y + player.h / 2, '#ff4d4d', 14, { spd: 3, life: 30, up: 1 });
+    if (player.hp <= 0) { player.hp = 0; gameOver(); return; }
+    player.inv = 90;
+    if (knockDir !== undefined) { player.vx = knockDir * 4; player.vy = -6; player.onGround = false; }
+    else respawn();
+  }
+
+  function gameOver() {
+    state = 'dead';
+    document.getElementById('goStats').innerHTML = `角色：<b>${game.ch.name}</b> · 难度：<b>${game.difficulty.name}</b><br>到达关卡：<b>${game.levelIndex + 1}/${LEVELS.length}</b><br>分数：<b>${game.score}</b> · 收集食物：<b>${game.foodCount}/${game.totalFood}</b><br>消灭怪物：<b>${game.killCount}</b>`;
+    show('gameover');
+  }
+
+  function winLevel() {
+    state = 'win';
+    const ratio = game.totalScore > 0 ? game.score / game.totalScore : 0;
+    let tier, cls;
+    if (ratio >= 0.7) { tier = '高玩'; cls = 'gao'; } else if (ratio >= 0.35) { tier = '有点用'; cls = 'you'; } else { tier = '乐子'; cls = 'le'; }
+    const tsec = game.time / 60;
+    const { best, rec } = saveBest(game.score, tsec);
+    document.getElementById('winStats').innerHTML = `角色：<b>${game.ch.name}</b> · 难度：<b>${game.difficulty.name}</b><br>分数：<b>${game.score}</b> / ${game.totalScore} · 收集食物：<b>${game.foodCount}/${game.totalFood}</b><br>消灭怪物：<b>${game.killCount}</b> · 用时：<b>${tsec.toFixed(1)}s</b> · 历史最佳：<b>${best.score}</b> (${best.time.toFixed(1)}s)` + (rec ? ' · <span style="color:#ffd84d">新纪录！</span>' : '');
+    const t = document.getElementById('winTier');
+    t.className = 'tier ' + cls; t.textContent = `评价：${tier}`;
+    const cols = ['#ff5fa2', '#ffd84d', '#5ad6e8', '#6fe06f', '#ffffff'];
+    for (let i = 0; i < 70; i++) spawnParticles(game.flag.x, game.flag.y - 60, cols[i % cols.length], 1, { spd: 4.5, life: 80, up: 3, grav: 0.12, size: 4 });
+    show('win');
+  }
+
+  function tryAttack() {
+    if (state !== 'playing' || !player) return;
+    const ch = game.ch;
+    if (ch.attack === 'roll') {
+      if (player.rollCd > 0 || player.rolling) return;
+      player.rolling = true; player.rollTime = 85; player.rollCd = 170;
+      spawnParticles(player.x + player.w / 2, player.y + player.h / 2, '#fff3d6', 8, { spd: 2, life: 18 });
+    } else {
+      if (player.attackCd > 0) return;
+      const dir = player.facing;
+      const px = player.x + player.w / 2 + dir * (player.w / 2 + 4);
+      const py = player.y + player.h / 2;
+      if (ch.attack === 'basketball') { game.projectiles.push({ type: 'basketball', x: px, y: py, vx: dir * 7.5, vy: -5, r: 6, grav: 0.32, life: 130, bounce: 2, spin: 0 }); player.attackCd = 42; }
+      else { game.projectiles.push({ type: 'sausage', x: px, y: py, vx: dir * 9.5, vy: -1, r: 4, grav: 0.05, life: 90, bounce: 0, spin: 0 }); player.attackCd = 26; }
+    }
+  }
+
+  function inDeepWater(x, y) {
+    for (const wz of game.water) { if (wz.deep && x > wz.x && x < wz.x + wz.w && y > wz.y && y < wz.y + wz.h) return wz; }
+    return null;
+  }
+
+  function updateProjectiles() {
+    const ps = game.projectiles;
+    for (let i = ps.length - 1; i >= 0; i--) {
+      const p = ps[i];
+      const wet = inDeepWater(p.x, p.y);
+      const drag = wet ? 0.94 : 1;
+      p.vy += p.grav * (wet ? 0.4 : 1);
+      p.vx *= drag; p.vy *= drag;
+      p.x += p.vx; p.y += p.vy; p.spin += 0.2; p.life--;
+      let dead = p.life <= 0;
+      if (p.y + p.r > FLOOR) {
+        if (p.type === 'basketball' && p.bounce > 0 && p.vy > 0) { p.y = FLOOR - p.r; p.vy = -p.vy * 0.62; p.bounce--; } else dead = true;
+      }
+      if (!dead) {
+        for (const s of game.staticPlats) { if (s.type === 'rock') continue; if (p.x > s.x && p.x < s.x + s.w && p.y + p.r > s.y && p.y - p.r < s.y + s.h) { dead = true; break; } }
+      }
+      if (!dead) {
+        for (const e of game.enemies) { if (!e.dead && circleHitsRect(p.x, p.y, p.r, e)) { killEnemy(e); dead = true; break; } }
+      }
+      if (dead) { spawnParticles(p.x, p.y, p.type === 'basketball' ? '#e8a23d' : '#d65a5a', 6, { spd: 2, life: 16, size: 2 }); ps.splice(i, 1); }
+    }
+  }
+
+  function killEnemy(e) {
+    if (e.dead) return;
+    e.dead = true; game.killCount++; game.score += 50; game.shake = Math.max(game.shake, 3); game.freeze = Math.max(game.freeze || 0, 3);
+    const col = e.type === 'walker' ? '#9d6bff' : (e.type === 'jelly' ? '#ff9ad6' : '#5ad6e8');
+    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, col, 16, { spd: 3, life: 30, up: 1.5, size: 3 });
+  }
+  function update() {
+    tick++; game.time++;
+    const ch = game.ch;
+    game.moving.forEach(p => {
+      p.prevX = p.x; p.prevY = p.y;
+      const t = tick * p.speed * OBSTACLE_SPEED_SCALE * game.difficulty.speedMul + p.phase;
+      if (p.axis === 'x') p.x = p.baseX + Math.sin(t) * p.amp; else p.y = p.baseY + Math.sin(t) * p.amp;
+      p.dx = p.x - p.prevX; p.dy = p.y - p.prevY;
+    });
+    game.hazards.forEach(hz => {
+      if (hz.type === 'saw') {
+        const t = tick * hz.speed * OBSTACLE_SPEED_SCALE * game.difficulty.speedMul + hz.phase;
+        if (hz.axis === 'x') hz.x = hz.baseX + Math.sin(t) * hz.amp; else hz.y = hz.baseY + Math.sin(t) * hz.amp;
+        hz.spin = (hz.spin || 0) + 0.25;
+      } else if (hz.type === 'fire') { const c = (tick + hz.phase) % hz.period; hz.active = c < hz.period * 0.6; }
+    });
+    game.enemies.forEach(e => {
+      if (e.dead) return;
+      e.anim += 0.2; if (e.flash > 0) e.flash--;
+      if (e.type === 'walker') { const nx = e.baseX + Math.sin(tick * e.speed + e.phase) * e.amp; e.dir = nx > e.x ? 1 : -1; e.x = nx; e.y = SURF - e.h; }
+      else if (e.type === 'flyer') { e.x = e.baseX + Math.cos(tick * e.speed + e.phase) * e.ampX; e.y = e.baseY + Math.sin(tick * e.speed * 1.4 + e.phase) * e.ampY; }
+      else { e.x = e.baseX + Math.sin(tick * e.speed + e.phase) * e.ampX; e.y = e.baseY + Math.sin(tick * e.speed * 1.3 + e.phase) * e.ampY; }
+    });
+    if (player.riding) { player.x += player.riding.dx; player.y += player.riding.dy; }
+    if (player.attackCd > 0) player.attackCd--;
+    if (player.rollCd > 0) player.rollCd--;
+    if (player.rolling) { player.rollTime--; if (player.rollTime <= 0) player.rolling = false; }
+
+    const pcx0 = player.x + player.w / 2, pcy0 = player.y + player.h / 2;
+    const deep = inDeepWater(pcx0, pcy0);
+    let inShallow = false;
+    if (!deep) { for (const wz of game.water) { if (!wz.deep && player.x + player.w > wz.x && player.x < wz.x + wz.w && player.y + player.h > wz.y && player.y < wz.y + wz.h) { inShallow = true; break; } } }
+    const swimming = !!deep, wasSwimming = game.swimming;
+    game.swimming = swimming;
+    if (swimming && !wasSwimming && player.vy > 3) { player.vy = 3; spawnParticles(pcx0, deep.y, '#bfe6ff', 10, { spd: 2, life: 20, up: 1.5, grav: 0.05, size: 2 }); }
+
+    const headUnder = swimming && (player.y > deep.y + 4);
+    if (headUnder) {
+      game.breath -= 0.16;
+      if (game.breath <= 0) { game.breath = 0; if (player.inv <= 0) { loseHp(player.facing * -1); game.breath = 45; return; } }
+      if (tick % 20 === 0) spawnParticles(player.x + player.w / 2, player.y, '#bfe6ff', 1, { spd: 0.5, life: 22, up: 1.2, grav: -0.02, size: 2 });
+    } else game.breath = Math.min(100, game.breath + 2.2);
+
+    const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    if (dir !== 0) player.facing = dir;
+
+    if (swimming) {
+      const swimSpd = ch.speed * MOVE_SPEED_SCALE * 0.82;
+      player.vx += (dir * swimSpd - player.vx) * 0.12;
+      let vyT = 0.5;
+      if (keys.up) vyT = -2.3; else if (keys.down) vyT = 2.3;
+      player.vy += (vyT - player.vy) * 0.12;
+      if (jumpBuffer > 0) {
+        if (player.y < deep.y + 14) { player.vy = ch.jump * 0.92; player.onGround = false; player.jumpAnim = 10; } else player.vy = -3.2;
+        jumpBuffer = 0;
+      }
+      if (jumpBuffer > 0) jumpBuffer--;
+      player.walkPhase += Math.abs(player.vx) * 0.2;
+      player.didDouble = false; coyote = 0;
+    } else {
+      const spd = player.rolling ? ch.speed * 1.9 : ch.speed * MOVE_SPEED_SCALE;
+      const target = dir * spd;
+      let accel = dir !== 0 ? (player.onGround ? 0.34 : 0.20) : (player.onGround ? 0.40 : 0.10);
+      player.vx += (target - player.vx) * accel;
+      if (Math.abs(player.vx) < 0.05) player.vx = 0;
+      if (Math.abs(player.vx) > 0.3 && player.onGround) player.walkPhase += Math.abs(player.vx) * 0.25;
+      if (inShallow) { player.vx *= 0.55; if (Math.abs(player.vx) > 0.5 && tick % 6 === 0) spawnParticles(pcx0, SURF - 4, '#5ad6e8', 2, { spd: 1, life: 14, up: 1, grav: 0.05, size: 2 }); }
+      if (jumpBuffer > 0) {
+        if (player.onGround || coyote > 0) { player.vy = inShallow ? ch.jump * 0.55 : ch.jump; player.onGround = false; coyote = 0; player.didDouble = false; jumpBuffer = 0; player.jumpAnim = 10; }
+        else if (!player.didDouble) { player.vy = ch.djump; player.didDouble = true; jumpBuffer = 0; player.jumpAnim = 10; }
+      }
+      if (jumpBuffer > 0) jumpBuffer--;
+      let g = player.vy < 0 ? GRAVITY : FALL_GRAVITY;
+      if (!player.onGround && Math.abs(player.vy) < 2.2) g *= 0.55;
+      player.vy += g;
+      if (player.vy > MAX_FALL) player.vy = MAX_FALL;
+    }
+
+    const solids = game.staticPlats.concat(game.moving);
+    player.x += player.vx;
+    for (const s of solids) { if (aabb(player, s)) { if (player.vx > 0) player.x = s.x - player.w; else if (player.vx < 0) player.x = s.x + s.w; player.vx = 0; } }
+    if (player.x < 0) { player.x = 0; player.vx = 0; }
+    if (player.x > game.worldW - player.w) { player.x = game.worldW - player.w; player.vx = 0; }
+
+    const wasGround = player.onGround, fallV = player.vy;
+    player.onGround = false; player.riding = null;
+    player.y += player.vy;
+    for (const s of solids) {
+      if (aabb(player, s)) {
+        if (player.vy > 0) { player.y = s.y - player.h; player.vy = 0; player.onGround = true; if (s.type === 'moving') player.riding = s; }
+        else if (player.vy < 0) { player.y = s.y + s.h; player.vy = 0; }
+      }
+    }
+    if (player.onGround && !wasGround && fallV > 5) { player.landAnim = Math.min(10, fallV * 0.8); spawnParticles(player.x + player.w / 2, player.y + player.h, swimming ? '#5ad6e8' : '#d8c7a0', 6, { spd: 1.6, life: 18, up: 0.5, grav: 0.1, size: 2 }); }
+    // 奔跑扬尘：速度越快尘越多
+    if (player.onGround && Math.abs(player.vx) > 1.1 && tick % 4 === 0) {
+      spawnParticles(player.x + player.w / 2 - player.facing * 5, player.y + player.h - 1, '#e0d2ac', 1, { spd: 0.7, life: 15, up: 0.55, grav: 0.045, size: 2 });
+    }
+    if (player.onGround) { coyote = 6; player.didDouble = false; } else if (coyote > 0) coyote--;
+    if (player.jumpAnim > 0) player.jumpAnim--;
+    if (player.landAnim > 0) player.landAnim--;
+    if (player.inv > 0) player.inv--;
+
+    updateProjectiles();
+
+    for (const hz of game.hazards) {
+      let hit = false;
+      if (hz.type === 'saw') hit = circleHitsRect(hz.x, hz.y, hz.r, player);
+      else if (hz.type === 'fire') { if (hz.active) hit = aabb(player, hz); }
+      if (hit && player.inv <= 0) { const cx = hz.type === 'saw' ? hz.x : hz.x + hz.w / 2; loseHp((player.x + player.w / 2) < cx ? -1 : 1); return; }
+    }
+
+    for (const e of game.enemies) {
+      if (e.dead || !aabb(player, e)) continue;
+      const stomp = player.vy > 0 && (player.y + player.h) - e.y < 14 && !swimming;
+      if (player.rolling || stomp) { killEnemy(e); if (stomp && !player.rolling) { player.vy = -8; player.onGround = false; } if (player.rolling) player.vx = player.facing * ch.speed * 1.9; }
+      else if (player.inv <= 0) { loseHp((player.x + player.w / 2) < (e.x + e.w / 2) ? -1 : 1); return; }
+    }
+
+    if (player.y > WORLDH + 80) { if (player.inv <= 0) { loseHp(); return; } }
+
+    for (const f of game.foods) {
+      if (f.taken) continue;
+      const dx = (player.x + player.w / 2) - f.x, dy = (player.y + player.h / 2) - f.y;
+      if (dx * dx + dy * dy < (f.r + 12) * (f.r + 12)) { f.taken = true; game.score += FOOD_TYPES[f.type].points; game.foodCount++; spawnParticles(f.x, f.y, FOOD_TYPES[f.type].color, 10, { spd: 2.5, life: 28, up: 1, grav: 0.06, size: 3 }); }
+    }
+
+    const pcx = player.x + player.w / 2;
+    game.checkpoints.forEach((cp, i) => { if (i > game.activeCp && pcx > cp.x && Math.abs((player.y + player.h) - cp.y) < 60) game.activeCp = i; });
+    if (pcx > game.flag.x && (player.y + player.h) > game.flag.y - 80) { reachFlag(); return; }
+
+    // 相机：横向前瞻（朝向前方偏移，跑得越快看得越远）+ 竖向平滑
+    const look = player.facing * Math.min(60, Math.abs(player.vx) * 18 + 24);
+    const targetCamX = Math.max(0, Math.min(game.worldW - W, pcx - W / 2 + look));
+    game.camX += (targetCamX - game.camX) * 0.10;
+    const targetCamY = Math.max(0, Math.min(WORLDH - H, (player.y + player.h / 2) - H / 2));
+    game.camY += (targetCamY - game.camY) * 0.12;
+
+    // 环境氛围粒子：水下气泡 / 地表浮尘
+    if (tick % 9 === 0) {
+      if (swimming) spawnParticles(game.camX + Math.random() * W, game.camY + Math.random() * H, 'rgba(190,230,255,.65)', 1, { spd: 0.15, life: 46, up: 0.5, grav: -0.015, size: 2 });
+      else if (game.camY < 60) spawnParticles(game.camX + Math.random() * W, game.camY + 40 + Math.random() * (H - 80), 'rgba(255,255,220,.45)', 1, { spd: 0.12, life: 55, up: 0, grav: 0, size: 1 });
+    }
+  }
+
+  function aabb(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function circleHitsRect(cx, cy, r, rect) { const nx = Math.max(rect.x, Math.min(cx, rect.x + rect.w)), ny = Math.max(rect.y, Math.min(cy, rect.y + rect.h)), dx = cx - nx, dy = cy - ny; return dx * dx + dy * dy < r * r; }
+
+  function spawnParticles(x, y, color, count, opt) {
+    opt = opt || {};
+    const spd = opt.spd || 2, life = opt.life || 30, grav = opt.grav !== undefined ? opt.grav : 0.12, size = opt.size || 3, up = opt.up || 0;
+    for (let i = 0; i < count; i++) { const a = Math.random() * Math.PI * 2, s = Math.random() * spd + 0.5; game.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - up, life: life * (0.6 + Math.random() * 0.4), maxLife: life, color, size, grav }); }
+  }
+  function updateParticles() { const ps = game.particles; for (let i = ps.length - 1; i >= 0; i--) { const p = ps[i]; p.x += p.vx; p.y += p.vy; p.vy += p.grav; p.vx *= 0.98; p.life--; if (p.life <= 0) ps.splice(i, 1); } }
+  function drawParticles() { for (const p of game.particles) { ctx.globalAlpha = Math.max(0, p.life / p.maxLife); ctx.fillStyle = p.color; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size); } ctx.globalAlpha = 1; }
+
+  const BEST_KEY = 'ballrun_best_v1';
+  function loadBest() { try { return JSON.parse(localStorage.getItem(BEST_KEY)); } catch (e) { return null; } }
+  function saveBest(score, timeSec) { const b = loadBest(); let rec = false, nb; if (!b || score > b.score) { nb = { score, time: timeSec }; rec = true; } else nb = { score: b.score, time: b.time }; try { localStorage.setItem(BEST_KEY, JSON.stringify(nb)); } catch (e) { } return { best: nb, rec }; }
+  function render() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#5ea9f5'); g.addColorStop(0.55, '#9fd4ff'); g.addColorStop(1, '#eef9ff');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // 地平线暖光
+    const hg = ctx.createLinearGradient(0, H * 0.5, 0, H);
+    hg.addColorStop(0, 'rgba(255,230,170,0)'); hg.addColorStop(1, 'rgba(255,220,150,.25)');
+    ctx.fillStyle = hg; ctx.fillRect(0, H * 0.5, W, H * 0.5);
+    if (!game) { drawClouds(0); drawBirds(0); drawBackground(0); drawMenuScene(); return; }
+    let sx = 0, sy = 0;
+    if (game.shake > 0) { sx = (Math.random() * 2 - 1) * game.shake; sy = (Math.random() * 2 - 1) * game.shake; }
+    ctx.save();
+    ctx.translate(-Math.round(game.camX) + sx, -Math.round(game.camY) + sy);
+    drawCave();
+    drawClouds(game.camX);
+    drawBirds(game.camX);
+    drawBackground(game.camX);
+    for (const s of game.staticPlats) { if (s.type === 'rock') drawRock(s); else drawPlatform(s); }
+    for (const m of game.moving) drawMoving(m);
+    for (const wz of game.water) drawWater(wz);
+    game.checkpoints.forEach((cp, i) => drawCheckpoint(cp, i <= game.activeCp));
+    drawFlag(game.flag);
+    for (const hz of game.hazards) { if (hz.type === 'saw') drawSaw(hz); else drawFire(hz); }
+    for (const f of game.foods) if (!f.taken) drawFood(f);
+    for (const e of game.enemies) if (!e.dead) drawEnemy(e);
+    for (const p of game.projectiles) drawProjectile(p);
+    drawPlayer();
+    drawParticles();
+    ctx.restore();
+    drawPostFX();
+    drawHUD();
+    drawLevelToast();
+  }
+
+  // 后期：水下色调 + 体积光柱 + 晕影 + 玩家环境光
+  function drawPostFX() {
+    if (game.swimming || game.camY > 60) {
+      const depth = Math.min(1, (game.camY - 60) / 200);
+      ctx.fillStyle = `rgba(16,70,150,${0.10 + depth * 0.12})`; ctx.fillRect(0, 0, W, H);
+      // 体积光柱（水面透下的光）
+      ctx.save(); ctx.globalAlpha = 0.08 + 0.05 * Math.sin(tick * 0.02); ctx.fillStyle = '#d8f1ff';
+      for (let i = 0; i < 3; i++) {
+        const bx = ((i * 230 + tick * 0.4) % (W + 220)) - 110;
+        ctx.beginPath(); ctx.moveTo(bx, -20); ctx.lineTo(bx + 70, -20); ctx.lineTo(bx + 190, H); ctx.lineTo(bx + 110, H); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+    // 玩家周围柔和环境光（地下时更明显）
+    if (game.camY > 40) {
+      const px = player.x + player.w / 2 - game.camX, py = player.y + player.h / 2 - game.camY;
+      const lg = ctx.createRadialGradient(px, py, 10, px, py, 190);
+      lg.addColorStop(0, 'rgba(255,240,200,.16)'); lg.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+    }
+    // 晕影
+    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.42, W / 2, H / 2, H * 0.98);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(4,6,20,.30)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawCave() {
+    const cx = Math.round(game.camX);
+    const cd = ctx.createLinearGradient(0, 342, 0, WORLDH);
+    cd.addColorStop(0, '#262019'); cd.addColorStop(0.5, '#171310'); cd.addColorStop(1, '#0c0a08');
+    ctx.fillStyle = cd; ctx.fillRect(cx - 80, 342, W + 160, WORLDH - 342);
+    ctx.fillStyle = 'rgba(255,255,255,.04)';
+    const start = cx - 80 - ((cx - 80) % 44);
+    for (let x = start; x < cx + W + 80; x += 44) for (let y = 366; y < WORLDH; y += 48) if (((x * 7 + y * 13) % 6) === 0) ctx.fillRect(x, y, 3, 3);
+  }
+
+  function drawBackground(camX) {
+    // 太阳：核心 + 多层光晕
+    const sg = ctx.createRadialGradient(540, 64, 6, 540, 64, 70);
+    sg.addColorStop(0, 'rgba(255,246,190,.95)'); sg.addColorStop(0.4, 'rgba(255,238,160,.55)'); sg.addColorStop(1, 'rgba(255,238,160,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(540, 64, 70, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff3b8'; ctx.beginPath(); ctx.arc(540, 64, 30, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(531, 55, 9, 0, 7); ctx.fill();
+    drawHillLayer(camX * 0.3, 208, '#b9e6cf', 240);
+    drawHillLayer(camX * 0.55, 252, '#93d3a6', 200);
+    drawTreeLayer(camX * 0.55);
+    drawBushLayer(camX * 0.9);
+  }
+  function drawTreeLayer(off) {
+    const spacing = 200, baseY = 252, start = -(((off % spacing) + spacing) % spacing);
+    for (let i = 0, x = start; x < W + spacing; x += spacing, i++) {
+      const tx = x + spacing / 2 + (i % 2 ? 30 : 0), r = 24 + (i % 3) * 5;
+      ctx.fillStyle = '#6b4a2b'; ctx.fillRect(tx - 3, baseY - 24, 6, 24);
+      ctx.fillStyle = '#7cc47f'; ctx.beginPath(); ctx.arc(tx, baseY - 32, r, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5fa564'; ctx.beginPath(); ctx.arc(tx + 9, baseY - 26, r * 0.5, 0, 7); ctx.fill();
+    }
+  }
+  function drawBushLayer(off) {
+    const spacing = 96, baseY = SURF, start = -(((off % spacing) + spacing) % spacing);
+    ctx.fillStyle = '#3f9d4a';
+    for (let x = start; x < W + spacing; x += spacing) { const bx = x + spacing / 2; ctx.beginPath(); ctx.arc(bx, baseY, 12, Math.PI, 0); ctx.arc(bx + 12, baseY, 9, Math.PI, 0); ctx.fill(); }
+  }
+  function drawBirds(camX) {
+    ctx.strokeStyle = 'rgba(60,60,80,.5)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i++) {
+      const speed = 0.25 + i * 0.05, base = (tick * speed + i * 137 + camX * 0.1) % (W + 160);
+      const x = (((base % (W + 160)) + (W + 160)) % (W + 160)) - 80, y = 70 + (i * 23) % 70 + Math.sin(tick * 0.03 + i) * 4, flap = Math.sin(tick * 0.12 + i) * 4;
+      ctx.beginPath(); ctx.moveTo(x - 8, y + flap); ctx.lineTo(x, y - 3); ctx.lineTo(x + 8, y + flap); ctx.stroke();
+    }
+  }
+  function drawHillLayer(off, baseY, color, spacing) {
+    ctx.fillStyle = color;
+    const start = -(((off % spacing) + spacing) % spacing);
+    for (let x = start; x < W + spacing; x += spacing) { ctx.beginPath(); ctx.arc(x + spacing / 2, baseY, spacing / 2, Math.PI, 0); ctx.fill(); }
+    ctx.fillRect(0, baseY, W, H - baseY);
+  }
+  function drawLevelToast() {
+    if (!game || game.levelToast <= 0) return;
+    const a = Math.min(1, game.levelToast / 30);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(W / 2 - 95, H / 2 - 28, 190, 56);
+    ctx.fillStyle = '#ffd84d'; ctx.font = 'bold 26px "Courier New", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('关卡 ' + (game.levelIndex + 1) + ' / ' + LEVELS.length, W / 2, H / 2);
+    ctx.globalAlpha = 1; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  }
+  function drawClouds(camX) {
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    const off = (tick * 0.2 + camX * 0.15) % (W + 120);
+    for (let i = 0; i < 4; i++) { const x = (((i * 220 + off) % (W + 120)) + (W + 120)) % (W + 120) - 60, y = 40 + (i % 2) * 30; cloud(x, y); }
+  }
+  function cloud(x, y) { ctx.beginPath(); ctx.arc(x, y, 14, 0, 7); ctx.arc(x + 16, y + 4, 18, 0, 7); ctx.arc(x + 36, y, 14, 0, 7); ctx.arc(x + 18, y - 8, 14, 0, 7); ctx.fill(); }
+
+  function drawPlatform(s) {
+    if (s.type === 'ground') {
+      const gd = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
+      gd.addColorStop(0, '#7d5731'); gd.addColorStop(0.6, '#63452a'); gd.addColorStop(1, '#43301d');
+      ctx.fillStyle = gd; ctx.fillRect(s.x, s.y, s.w, s.h);
+      // 顶部受光草皮
+      const gg = ctx.createLinearGradient(0, s.y, 0, s.y + 10);
+      gg.addColorStop(0, '#67c24f'); gg.addColorStop(1, '#3f8a2e');
+      ctx.fillStyle = gg; ctx.fillRect(s.x, s.y, s.w, 8);
+      ctx.fillStyle = '#8ee06c';
+      for (let x = s.x + 2; x < s.x + s.w - 2; x += 7) ctx.fillRect(x, s.y, 2, 3);
+      // 土壤颗粒
+      ctx.fillStyle = 'rgba(255,255,255,.06)';
+      for (let x = s.x + 4; x < s.x + s.w - 4; x += 13) ctx.fillRect(x, s.y + 14 + ((x * 7) % 20), 3, 3);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(s.x, s.y + s.h - 4, s.w, 4);
+    } else {
+      const gd = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
+      gd.addColorStop(0, '#a06b3d'); gd.addColorStop(1, '#5e3c22');
+      ctx.fillStyle = gd; ctx.fillRect(s.x, s.y, s.w, s.h);
+      ctx.fillStyle = '#8ee06c'; ctx.fillRect(s.x, s.y, s.w, 3);
+      ctx.fillStyle = '#67c24f'; ctx.fillRect(s.x, s.y + 3, s.w, 2);
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(s.x, s.y + s.h - 3, s.w, 3);
+      // 边缘亮边
+      ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(s.x, s.y, 2, s.h); ctx.fillRect(s.x + s.w - 2, s.y, 2, s.h);
+    }
+  }
+  function drawRock(s) {
+    const gd = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
+    gd.addColorStop(0, '#4a4254'); gd.addColorStop(0.5, '#3a3340'); gd.addColorStop(1, '#241f2a');
+    ctx.fillStyle = gd; ctx.fillRect(s.x, s.y, s.w, s.h);
+    ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fillRect(s.x, s.y, s.w, 3);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(s.x, s.y + s.h - 4, s.w, 4);
+    // 岩石纹理与微光晶簇
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    for (let x = s.x + 6; x < s.x + s.w - 6; x += 22) ctx.fillRect(x, s.y + 12 + (x % 3) * 6, 4, 4);
+    const tw = 0.5 + 0.5 * Math.sin(tick * 0.05 + s.x);
+    ctx.fillStyle = `rgba(120,220,255,${0.10 + tw * 0.14})`;
+    for (let x = s.x + 14; x < s.x + s.w - 10; x += 56) { ctx.beginPath(); ctx.moveTo(x, s.y + 8); ctx.lineTo(x + 4, s.y + 8); ctx.lineTo(x + 2, s.y + 13); ctx.closePath(); ctx.fill(); }
+  }
+  function drawMoving(m) {
+    ctx.fillStyle = '#7a5fd0'; ctx.fillRect(m.x, m.y, m.w, m.h);
+    ctx.fillStyle = '#b9a6f0'; for (let x = m.x + 4; x < m.x + m.w - 4; x += 12) ctx.fillRect(x, m.y + 4, 6, 3);
+  }
+  function drawWater(wz) {
+    const wd = ctx.createLinearGradient(0, wz.y, 0, wz.y + wz.h);
+    if (wz.deep) { wd.addColorStop(0, 'rgba(90,180,240,.50)'); wd.addColorStop(0.4, 'rgba(40,120,200,.58)'); wd.addColorStop(1, 'rgba(10,50,110,.78)'); }
+    else { wd.addColorStop(0, 'rgba(120,200,255,.62)'); wd.addColorStop(1, 'rgba(50,140,210,.80)'); }
+    ctx.fillStyle = wd; ctx.fillRect(wz.x, wz.y, wz.w, wz.h);
+    if (wz.deep) {
+      // 水下焦散光纹
+      ctx.save(); ctx.globalAlpha = 0.10; ctx.strokeStyle = '#bfe8ff'; ctx.lineWidth = 2;
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        for (let i = 0; i <= wz.w; i += 8) {
+          const yy = wz.y + 26 + k * 40 + Math.sin(tick * 0.06 + (wz.x + i) * 0.05 + k * 2) * 8;
+          i === 0 ? ctx.moveTo(wz.x + i, yy) : ctx.lineTo(wz.x + i, yy);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // 水面：波动高光线 + 反光带
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2; ctx.beginPath();
+    for (let i = 0; i <= wz.w; i += 5) { const yy = wz.y + Math.sin(tick * 0.1 + (wz.x + i) * 0.15) * 2; i === 0 ? ctx.moveTo(wz.x + i, yy) : ctx.lineTo(wz.x + i, yy); }
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.20)'; ctx.fillRect(wz.x, wz.y + 2, wz.w, 3);
+  }
+  function drawFire(hz) {
+    const n = Math.max(1, Math.round(hz.w / 14)), sw = hz.w / n, baseY = hz.y + hz.h;
+    // 喷发时的暖色辉光
+    if (hz.active) {
+      const fg = ctx.createRadialGradient(hz.x + hz.w / 2, baseY - 10, 4, hz.x + hz.w / 2, baseY - 10, hz.w * 0.9 + 14);
+      fg.addColorStop(0, 'rgba(255,170,60,.30)'); fg.addColorStop(1, 'rgba(255,170,60,0)');
+      ctx.fillStyle = fg; ctx.fillRect(hz.x - 30, baseY - 60, hz.w + 60, 70);
+    }
+    ctx.fillStyle = '#3a2a1a'; ctx.fillRect(hz.x, baseY - 4, hz.w, 4);
+    const topY = hz.active ? hz.y : hz.y + hz.h - 6, col = hz.active ? '#ff7a1a' : '#6b6b6b', col2 = hz.active ? '#ffd24d' : '#9a9a9a';
+    for (let i = 0; i < n; i++) {
+      const x = hz.x + i * sw, flick = Math.sin(tick * 0.25 + i * 1.7) * (hz.active ? 3 : 1);
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x, baseY); ctx.quadraticCurveTo(x + sw / 2, topY - 8 + flick, x + sw, baseY); ctx.closePath(); ctx.fill();
+      if (hz.active) { ctx.fillStyle = col2; ctx.beginPath(); ctx.moveTo(x + sw * 0.28, baseY); ctx.quadraticCurveTo(x + sw / 2, topY + 4 + flick, x + sw * 0.72, baseY); ctx.closePath(); ctx.fill(); }
+    }
+  }
+  function drawSaw(hz) {
+    const x = hz.x, y = hz.y, r = hz.r;
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = 'rgba(255,80,80,.22)'; ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, 7); ctx.fill();
+    ctx.rotate(hz.spin || 0);
+    ctx.fillStyle = '#c9ced8';
+    const teeth = 8;
+    ctx.beginPath();
+    for (let i = 0; i < teeth * 2; i++) { const ang = Math.PI / teeth * i, rr = i % 2 === 0 ? r : r * 0.66, px = Math.cos(ang) * rr, py = Math.sin(ang) * rr; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#7a2230'; ctx.beginPath(); ctx.arc(0, 0, r * 0.34, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  function drawEnemy(e) {
+    const x = Math.round(e.x), y = Math.round(e.y), flash = e.flash > 0 && Math.floor(tick / 2) % 2 === 0;
+    ctx.save();
+    if (e.dir < 0) { ctx.translate(x + e.w, y); ctx.scale(-1, 1); ctx.translate(-x, -y); }
+    if (e.type === 'walker') {
+      const sq = Math.sin(e.anim) * 1.5;
+      ctx.fillStyle = flash ? '#fff' : '#9d6bff';
+      ctx.beginPath(); ctx.ellipse(x + e.w / 2, y + e.h - 6 + sq * 0.5, e.w / 2, (e.h - 6) / 2 - sq * 0.3, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillRect(x + 5, y + 7, 4, 4); ctx.fillRect(x + e.w - 9, y + 7, 4, 4);
+      ctx.fillStyle = '#000'; ctx.fillRect(x + 6, y + 8, 2, 2); ctx.fillRect(x + e.w - 8, y + 8, 2, 2);
+      ctx.fillStyle = flash ? '#fff' : '#7a4de0'; ctx.fillRect(x + 3, y + e.h - 4, 5, 4); ctx.fillRect(x + e.w - 8, y + e.h - 4, 5, 4);
+    } else if (e.type === 'flyer') {
+      const flap = Math.sin(e.anim * 2) * 4;
+      ctx.fillStyle = flash ? '#fff' : '#39c6d6';
+      ctx.beginPath(); ctx.moveTo(x + 2, y + 8); ctx.lineTo(x - 4, y + 4 - flap); ctx.lineTo(x + 2, y + 2); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x + e.w - 2, y + 8); ctx.lineTo(x + e.w + 4, y + 4 - flap); ctx.lineTo(x + e.w - 2, y + 2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = flash ? '#fff' : '#4ad0e0'; ctx.beginPath(); ctx.arc(x + e.w / 2, y + e.h / 2, e.h / 2, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillRect(x + e.w / 2 - 5, y + 5, 3, 3); ctx.fillRect(x + e.w / 2 + 2, y + 5, 3, 3);
+      ctx.fillStyle = '#000'; ctx.fillRect(x + e.w / 2 - 4, y + 6, 1, 1); ctx.fillRect(x + e.w / 2 + 3, y + 6, 1, 1);
+      ctx.fillStyle = '#fff'; ctx.fillRect(x + e.w / 2 - 4, y + e.h - 4, 2, 3); ctx.fillRect(x + e.w / 2 + 2, y + e.h - 4, 2, 3);
+    } else {
+      const pulse = Math.sin(e.anim * 1.5) * 2;
+      ctx.fillStyle = flash ? '#fff' : 'rgba(255,154,214,.85)';
+      ctx.beginPath(); ctx.arc(x + e.w / 2, y + e.h / 2 - 1, e.w / 2 + pulse * 0.3, Math.PI, 0); ctx.fill();
+      ctx.fillRect(x, y + e.h / 2 - 1, e.w, 3);
+      ctx.strokeStyle = flash ? '#fff' : '#ff9ad6'; ctx.lineWidth = 2;
+      for (let i = 0; i < 4; i++) { const tx = x + 3 + i * (e.w - 6) / 3, wob = Math.sin(e.anim * 2 + i) * 2; ctx.beginPath(); ctx.moveTo(tx, y + e.h / 2 + 2); ctx.lineTo(tx + wob, y + e.h + 4); ctx.stroke(); }
+      ctx.fillStyle = '#a3336e'; ctx.fillRect(x + e.w / 2 - 4, y + 4, 3, 3); ctx.fillRect(x + e.w / 2 + 2, y + 4, 3, 3);
+    }
+    ctx.restore();
+    if (e.maxHp > 1) { ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x, y - 6, e.w, 3); ctx.fillStyle = '#6fe06f'; ctx.fillRect(x, y - 6, e.w * (e.hp / e.maxHp), 3); }
+  }
+
+  function drawProjectile(p) {
+    ctx.save(); ctx.translate(p.x, p.y);
+    if (p.type === 'basketball') {
+      ctx.rotate(p.spin);
+      ctx.fillStyle = '#e87f2a'; ctx.beginPath(); ctx.arc(0, 0, p.r, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#7a3a10'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-p.r, 0); ctx.lineTo(p.r, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -p.r); ctx.lineTo(0, p.r); ctx.stroke();
+    } else {
+      ctx.rotate(Math.atan2(p.vy, p.vx));
+      ctx.fillStyle = '#d65a5a'; ctx.fillRect(-p.r * 1.6, -p.r * 0.7, p.r * 3.2, p.r * 1.4);
+      ctx.fillStyle = '#ffb0b0'; ctx.fillRect(-p.r * 1.6, -p.r * 0.7, p.r * 0.6, p.r * 1.4); ctx.fillRect(p.r, -p.r * 0.7, p.r * 0.6, p.r * 1.4);
+    }
+    ctx.restore();
+  }
+
+  function drawFood(f) {
+    const c = FOOD_TYPES[f.type].color, bob = Math.sin(tick * 0.08 + f.x) * 2, x = f.x, y = f.y + bob;
+    // 高价值食物的辉光
+    if (f.type === 'star' || f.type === 'gem') {
+      const pulse = 0.55 + 0.45 * Math.sin(tick * 0.1 + f.x);
+      const r = f.r + 6 + pulse * 4;
+      const fg = ctx.createRadialGradient(x, y, 1, x, y, r);
+      fg.addColorStop(0, f.type === 'star' ? 'rgba(255,230,120,.5)' : 'rgba(120,225,255,.5)');
+      fg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,.12)';
+      ctx.beginPath(); ctx.arc(x, y, f.r + 4, 0, 7); ctx.fill();
+    }
+    if (f.type === 'apple') {
+      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, f.r, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y - f.r); ctx.lineTo(x + 3, y - f.r - 5); ctx.stroke();
+    } else if (f.type === 'burger') {
+      ctx.fillStyle = '#caa15a'; ctx.fillRect(x - f.r, y - 2, f.r * 2, 4);
+      ctx.fillStyle = '#e09a3a'; ctx.fillRect(x - f.r + 2, y - f.r, f.r * 2 - 4, f.r - 2);
+      ctx.fillStyle = '#7bbf4a'; ctx.fillRect(x - f.r + 2, y + 2, f.r * 2 - 4, 3);
+      ctx.fillStyle = '#a85b2a'; ctx.fillRect(x - f.r + 2, y + 5, f.r * 2 - 4, 3);
+    } else if (f.type === 'star') drawStar(x, y, f.r, c);
+    else { ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x, y - f.r); ctx.lineTo(x + f.r, y); ctx.lineTo(x, y + f.r); ctx.lineTo(x - f.r, y); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(x - 2, y - 3, 3, 3); }
+  }
+  function drawStar(x, y, r, c) { ctx.fillStyle = c; ctx.beginPath(); for (let i = 0; i < 10; i++) { const ang = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 === 0 ? r : r * 0.45, px = x + Math.cos(ang) * rr, py = y + Math.sin(ang) * rr; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); } ctx.closePath(); ctx.fill(); }
+
+  function drawCheckpoint(cp, reached) {
+    const x = cp.x, y = cp.y;
+    ctx.fillStyle = '#555'; ctx.fillRect(x - 2, y - 60, 4, 60);
+    ctx.fillStyle = reached ? '#5ad65a' : '#bbbbbb';
+    ctx.beginPath(); ctx.moveTo(x + 2, y - 60); ctx.lineTo(x + 26, y - 52); ctx.lineTo(x + 2, y - 44); ctx.closePath(); ctx.fill();
+    if (reached) { ctx.fillStyle = '#fff'; ctx.fillRect(x + 6, y - 55, 4, 8); }
+  }
+  function drawFlag(fl) {
+    const x = fl.x, y = fl.y;
+    ctx.fillStyle = '#333'; ctx.fillRect(x - 3, y - 90, 6, 90);
+    ctx.fillStyle = '#ffd84d'; ctx.beginPath(); ctx.moveTo(x + 3, y - 90); ctx.lineTo(x + 40, y - 78); ctx.lineTo(x + 3, y - 66); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e8483b'; ctx.fillRect(x + 14, y - 84, 6, 6);
+  }
+
+  function drawPlayer() {
+    const ch = game.ch, p = player;
+    if (p.inv > 0 && Math.floor(tick / 4) % 2 === 0) return;
+    const x = Math.round(p.x), y = Math.round(p.y), w = p.w, h = p.h;
+    if (p.rolling) {
+      if (p.onGround) { ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x + w / 2, y + h, w * 0.5, 3.5, 0, 0, 7); ctx.fill(); }
+      ctx.save(); const cx = x + w / 2, cy = y + h - (w / 2); ctx.translate(cx, cy); ctx.rotate(p.walkPhase * 0.3);
+      ctx.fillStyle = ch.color; ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, 7); ctx.fill();
+      ctx.fillStyle = ch.accent; ctx.beginPath(); ctx.arc(0, 0, w / 4, 0, 7); ctx.fill();
+      ctx.restore(); return;
+    }
+    const swimming = game.swimming;
+    const moving = Math.abs(p.vx) > 0.4 && p.onGround;
+    const air = !p.onGround;
+    const ph = p.walkPhase * 0.55;
+    const sw = moving ? Math.sin(ph) : 0;
+    const liftL = moving ? Math.max(0, Math.sin(ph)) * 3 : 0, liftR = moving ? Math.max(0, Math.sin(ph + Math.PI)) * 3 : 0;
+    const offL = moving ? Math.cos(ph) * 2 : 0, offR = moving ? Math.cos(ph + Math.PI) * 2 : 0;
+    const breathe = (!moving && p.onGround) ? Math.sin(tick * 0.07) * 0.02 : 0;
+    const blink = (tick % 150) < 6 ? 1 : 0;
+    if (p.onGround) { ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x + w / 2, y + h, w * 0.5, 3.5, 0, 0, 7); ctx.fill(); }
+    ctx.save();
+    const s = (p.jumpAnim > 0 ? p.jumpAnim / 10 : 0) - (p.landAnim > 0 ? p.landAnim / 10 : 0);
+    const cx = x + w / 2, feetY = y + h;
+    ctx.translate(cx, feetY); ctx.scale(1 - s * 0.12, 1 + s * 0.15 + breathe); ctx.translate(-cx, -feetY);
+    if (p.facing < 0) { ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.translate(-x, -y); }
+    const armY = (ch.body === 'fat' ? 12 : 14) - sw * 3, legY = y + h - 5;
+    const swimKick = swimming ? Math.sin(tick * 0.3) * 3 : 0;
+    ctx.fillStyle = ch.color; ctx.fillRect(x + 1, y + armY, 3, 8); ctx.fillRect(x + w - 4, y + armY, 3, 8);
+    if (ch.body === 'thin') {
+      ctx.fillStyle = ch.color; ctx.fillRect(x + 2, y + 8, w - 4, h - 12); ctx.fillRect(x, y, w, 12);
+      ctx.fillStyle = ch.skin; ctx.fillRect(x + 3, y + 14, w - 6, 4);
+      ctx.fillStyle = ch.color;
+      if (swimming) { ctx.fillRect(x + 2, legY - swimKick, 4, 5); ctx.fillRect(x + w - 6, legY + swimKick, 4, 5); }
+      else if (air) { ctx.fillRect(x + 3, legY, 4, 5); ctx.fillRect(x + w - 7, legY, 4, 5); }
+      else { ctx.fillRect(x + 2 + offL, legY - liftL, 4, 5); ctx.fillRect(x + w - 6 + offR, legY - liftR, 4, 5); }
+      ctx.fillStyle = '#000';
+      if (blink) ctx.fillRect(x + 3, y + 5, w - 6, 2); else { ctx.fillRect(x + 3, y + 4, 3, 3); ctx.fillRect(x + w - 6, y + 4, 3, 3); }
+    } else if (ch.body === 'fat') {
+      ctx.fillStyle = ch.color; ctx.fillRect(x, y + 6, w, h - 8); ctx.fillRect(x + 2, y, w - 4, 10);
+      ctx.fillStyle = ch.accent; ctx.fillRect(x + 3, y + h - 12, w - 6, 8);
+      ctx.fillStyle = ch.skin;
+      if (swimming) { ctx.fillRect(x + 3, legY - swimKick, 6, 5); ctx.fillRect(x + w - 9, legY + swimKick, 6, 5); }
+      else if (air) { ctx.fillRect(x + 4, legY, 6, 5); ctx.fillRect(x + w - 10, legY, 6, 5); }
+      else { ctx.fillRect(x + 3 + offL, legY - liftL, 6, 5); ctx.fillRect(x + w - 9 + offR, legY - liftR, 6, 5); }
+      ctx.fillStyle = '#000';
+      if (blink) ctx.fillRect(x + 5, y + 3, w - 10, 2); else { ctx.fillRect(x + 5, y + 3, 3, 3); ctx.fillRect(x + w - 8, y + 3, 3, 3); }
+      ctx.fillStyle = ch.skin; ctx.fillRect(x + w - 8, y + 7 - sw * 3, 4, 4);
+    } else {
+      ctx.fillStyle = ch.color; ctx.fillRect(x + 1, y + 4, w - 2, h - 10);
+      ctx.fillStyle = ch.accent; ctx.fillRect(x + 3, y + 6, w - 6, 3);
+      ctx.fillStyle = ch.skin; ctx.fillRect(x - 2, y + 8 - Math.round(sw * 3), 3, 6); ctx.fillRect(x + w - 1, y + 8 + Math.round(sw * 3), 3, 6);
+      if (swimming) { ctx.fillRect(x + 3, legY - swimKick, 4, 5); ctx.fillRect(x + w - 7, legY + swimKick, 4, 5); }
+      else if (air) { ctx.fillRect(x + 3, legY, 4, 5); ctx.fillRect(x + w - 7, legY, 4, 5); }
+      else { ctx.fillRect(x + 3 + offL, legY - liftL, 4, 5); ctx.fillRect(x + w - 7 + offR, legY - liftR, 4, 5); }
+      ctx.fillStyle = '#000';
+      if (blink) ctx.fillRect(x + 4, y + 9, w - 8, 2); else { ctx.fillRect(x + 4, y + 9, 3, 3); ctx.fillRect(x + w - 7, y + 9, 3, 3); }
+    }
+    ctx.restore();
+  }
+
+  function drawHUD() {
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(0, 0, W, 42);
+    for (let i = 0; i < player.maxHp; i++) drawHeart(10 + i * 18, 6, 12, i < player.hp);
+    ctx.fillStyle = '#fff'; ctx.font = '14px "Courier New", monospace'; ctx.textBaseline = 'top';
+    ctx.fillText(`分数 ${game.score}`, 14 + player.maxHp * 18, 6);
+    ctx.fillText(`食物 ${game.foodCount}/${game.totalFood}`, 150, 6);
+    ctx.fillText(`关卡 ${game.levelIndex + 1}/${LEVELS.length}`, 280, 6);
+    const tsec = (game.time / 60).toFixed(1);
+    ctx.textAlign = 'right';
+    ctx.fillText(`时间 ${tsec}s`, W - 10, 6);
+    ctx.fillText(`${game.ch.name} · ${game.difficulty.name}`, W - 10, 22);
+    ctx.textAlign = 'left';
+    const ch = game.ch;
+    const cdMax = ch.attack === 'roll' ? 170 : (ch.attack === 'basketball' ? 42 : 26);
+    const cdNow = ch.attack === 'roll' ? player.rollCd : player.attackCd;
+    const r = cdNow > 0 ? 1 - cdNow / cdMax : 1;
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(14 + player.maxHp * 18, 24, 60, 6);
+    ctx.fillStyle = r >= 1 ? '#6fe06f' : '#e8a23d'; ctx.fillRect(14 + player.maxHp * 18, 24, 60 * r, 6);
+    if (game.swimming || game.breath < 100) {
+      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(W / 2 - 70, 8, 140, 14);
+      const br = game.breath / 100;
+      ctx.fillStyle = br > 0.4 ? '#5ad6e8' : '#ff6b6b'; ctx.fillRect(W / 2 - 68, 10, 136 * br, 10);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(W / 2 - 70, 8, 140, 14);
+      ctx.fillStyle = '#04202b'; ctx.font = 'bold 10px "Courier New", monospace'; ctx.textAlign = 'center'; ctx.fillText('氧气', W / 2, 10); ctx.textAlign = 'left';
+    }
+  }
+  function drawHeart(x, y, s, filled) {
+    ctx.fillStyle = filled ? '#ff4d6d' : 'rgba(255,255,255,.25)';
+    ctx.fillRect(x + 2, y, s - 4, s - 4); ctx.fillRect(x, y + 2, s, s - 6); ctx.fillRect(x + 2, y + s - 5, s - 4, 3); ctx.fillRect(x + 2, y + s - 2, 2, 2); ctx.fillRect(x + s - 4, y + s - 2, 2, 2);
+  }
+
+  function drawMenuScene() {
+    ctx.fillStyle = '#6b4a2b'; ctx.fillRect(0, SURF, W, H - SURF);
+    ctx.fillStyle = '#4f9d3a'; ctx.fillRect(0, SURF, W, 8);
+    const by = SURF - 30 - Math.abs(Math.sin(tick * 0.05)) * 40;
+    ctx.fillStyle = '#ffd84d'; ctx.beginPath(); ctx.arc(W / 2, by, 18, 0, 7); ctx.fill();
+    ctx.fillStyle = '#e8483b'; ctx.fillRect(W / 2 - 4, by - 6, 8, 4);
+  }
+
+  function loop() {
+    // 打击停顿：短暂冻结逻辑帧但保持渲染，强化反馈冲击力
+    if (game && game.freeze > 0) game.freeze--;
+    else if (state === 'playing') update();
+    if (game) { updateParticles(); if (game.shake > 0) { game.shake *= 0.86; if (game.shake < 0.4) game.shake = 0; } if (game.levelToast > 0) game.levelToast--; }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  const keyMap = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'up', ArrowDown: 'down', KeyS: 'down' };
+  const attackKeys = { KeyJ: 1, KeyX: 1, KeyF: 1 };
+  window.addEventListener('keydown', e => {
+    const k = keyMap[e.code];
+    if (k) { if (k === 'up' && !e.repeat) jumpBuffer = 8; keys[k] = true; e.preventDefault(); }
+    if (attackKeys[e.code] && !e.repeat) { tryAttack(); e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => { const k = keyMap[e.code]; if (k) { if (k === 'up' && player && player.vy < 0 && !game.swimming) player.vy *= 0.45; keys[k] = false; e.preventDefault(); } });
+
+  (function bindTouch() {
+    const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    if (isTouch) document.body.classList.add('touch-on');
+    function press(k) { if (k === 'up' && player) jumpBuffer = 8; keys[k] = true; }
+    function release(k) { if (k === 'up' && player && player.vy < 0 && !game.swimming) player.vy *= 0.45; keys[k] = false; }
+    document.querySelectorAll('#touch .tbtn').forEach(btn => {
+      const k = btn.dataset.key;
+      if (k === 'attack') btn.addEventListener('pointerdown', e => { e.preventDefault(); tryAttack(); });
+      else {
+        btn.addEventListener('pointerdown', e => { e.preventDefault(); press(k); });
+        btn.addEventListener('pointerup', e => { e.preventDefault(); release(k); });
+        btn.addEventListener('pointercancel', () => release(k));
+        btn.addEventListener('pointerleave', () => release(k));
+      }
+      btn.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    });
+    const cv = document.getElementById('game');
+    cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+  })();
+
+  function hideAll() { ['menu', 'gameover', 'win'].forEach(id => document.getElementById(id).classList.remove('show')); }
+  function show(id) { document.getElementById(id).classList.add('show'); document.body.classList.remove('playing'); }
+
+  function buildMenu() {
+    const charsEl = document.getElementById('chars'); charsEl.innerHTML = '';
+    Object.entries(CHARACTERS).forEach(([key, c]) => {
+      const el = document.createElement('div');
+      el.className = 'card' + (key === selectedChar ? ' sel' : '');
+      const bd = c.body === 'thin' ? '瘦高敏捷·跳跃更强' : c.body === 'fat' ? '贪吃胖子·速度慢' : '长手脚的香肠·速度正常';
+      el.innerHTML = `<div class="nm">${c.name}</div><div class="ds">${bd}</div><div class="ds" style="color:#8fe3a0">技能：${c.atkName}</div><div class="hp">血量 ${c.hp} 点 · 速度${c.body === 'fat' ? '慢' : c.body === 'thin' ? '快' : '中'}</div>`;
+      el.onclick = () => { selectedChar = key; buildMenu(); };
+      charsEl.appendChild(el);
+    });
+    const diffsEl = document.getElementById('diffs'); diffsEl.innerHTML = '';
+    Object.entries(DIFFS).forEach(([key, d]) => {
+      const el = document.createElement('div');
+      el.className = 'diff' + (key === selectedDiff ? ' sel' : '');
+      el.innerHTML = `<div class="nm">${d.name}</div><div class="ds">${d.ds}</div>`;
+      el.onclick = () => { selectedDiff = key; buildMenu(); };
+      diffsEl.appendChild(el);
+    });
+    const b = loadBest(); const bel = document.getElementById('bestLine');
+    if (bel) bel.textContent = b ? `历史最佳：分数 ${b.score} · 用时 ${b.time.toFixed(1)}s` : '历史最佳：暂无记录';
+  }
+
+  document.getElementById('startBtn').onclick = startGame;
+  document.getElementById('retryBtn').onclick = startGame;
+  document.getElementById('menuBtn').onclick = goMenu;
+  document.getElementById('winRetry').onclick = startGame;
+  document.getElementById('winMenu').onclick = goMenu;
+  function goMenu() { hideAll(); state = 'menu'; game = null; player = null; buildMenu(); show('menu'); }
+
+  buildMenu();
+  loop();
+})();
+</script>
+</body>
+</html>
